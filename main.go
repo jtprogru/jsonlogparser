@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"flag"
 	"os"
 )
 
@@ -26,15 +27,33 @@ type LogString struct {
 	HTTPUserAgent string `json:"http_user_agent"`
 }
 
+//type Report struct {
+//	IP string `json:"remote_addr"`
+//}
+
 func main() {
-	// Check length of args
-	if len(os.Args) < 1 {
-		fmt.Println("ERROR: lost path to logfile \n" +
-			"./jsonlogparser ./path/to/access.log")
+
+	fname := flag.String("fname", "/var/log/nginx/access.log", "A path to access.log Nginx")
+	howmuch := flag.Int("howmuch", 15, "Show a TOP of remote addresses")
+	//showRequests := flag.Bool("request", false, "Show a TOP of Requests if enabled")
+	//showUpstreams := flag.Bool("upstreams", false, "Show a upstream if enabled")
+	flag.Parse()
+
+	//var report []LogString
+
+	// Check file name
+	if *fname == "" {
+		fmt.Println("Error: Please enter a file name \n" +
+			"./jsonlogparser -fname ./path/to/access.log")
 	}
-	fName := os.Args[1]
+	if *howmuch == 0 {
+		fmt.Println("Error: Please enter a file name \n" +
+			"./jsonlogparser -fname ./path/to/access.log -howmuch 15")
+	}
+	c := *howmuch
 	// Try to open file
-	file, err := os.Open(fName)
+	FName := *fname
+	file, err := os.Open(FName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,10 +70,32 @@ func main() {
 	}
 
 	fmt.Println(len(prep))
-	for k,_ := range prep {
-		str := []byte(string(prep[k]))
+	res := prepareData(prep)
+	rep := makeReport(res, c)
+	fmt.Println(rep)
+	fmt.Println(len(rep))
+}
+
+func prepareData(data []string) []LogString {
+	var result []LogString
+
+	for k,_ := range data {
+		str := []byte(string(data[k]))
 		res := LogString{}
 		json.Unmarshal([]byte(str), &res)
-		fmt.Println(res)
+		//fmt.Println(res.RemoteAddr)
+		result = append(result, res)
 	}
+	return result
 }
+
+func makeReport(data []LogString, count int) []string {
+	var res []string
+	i := 0
+	for _,v := range data {
+		i += 1
+		res = append(res, v.RemoteAddr)
+	}
+	return res[0:count]
+}
+
