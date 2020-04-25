@@ -2,38 +2,27 @@ package main
 
 import (
 	"fmt"
-	//"io"
 	"os"
 	"net"
 	"path"
-	//"strings"
-	//"time"
 )
 
 const iso8601DateFormat = "2006-01-02T15:04:05-07:00"
-//commonlogDateFormat := "2/Jan/2006:15:04:05 -0700"
-//parsedDate, err := time.Parse(commonlogDateFormat, "18/Oct/2014:08:53:14 +0200")
-//if err != nil {
-//	fmt.Println(err)
-//	return
-//}
-//fmt.Println(parsedDate.Format(iso8601DateFormat))
 
-var logstring struct {
-	// TODO:
-	//timestamp time.RFC3339  //time_iso8601
-	remote_addr net.IPAddr
-	cookie_bar string
-	set_cookie string
-	body_bytes_sent int
-	status int
-	request string
-	url string
-	request_method string
-	upstream net.IPAddr
-	response_time float32
-	http_referrer string
-	http_user_agent string
+type LogString struct {
+	timestamp string `json:"@timestamp"`
+	remote_addr string `json:"remote_addr"`
+	cookie_bar string `json:"cookie_bar"`
+	set_cookie string `json:"set_cookie"`
+	body_bytes_sent string `json:"body_bytes_sent"`
+	status string `json:"status"`
+	request string `json:"request"`
+	url string `json:"url"`
+	request_method string `json:"request_method"`
+	upstream string `json:"upstream"`
+	response_time string `json:"response_time"`
+	http_referrer string `json:"http_referrer"`
+	http_user_agent string `json:"http_user_agent"`
 }
 
 func main() {
