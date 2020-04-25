@@ -27,22 +27,24 @@ type LogString struct {
 }
 
 func main() {
+	// Check length of args
 	if len(os.Args) < 1 {
-		fmt.Println("ERROR")
+		fmt.Println("ERROR: lost path to logfile \n" +
+			"./jsonlogparser ./path/to/access.log")
 	}
 	fName := os.Args[1]
+	// Try to open file
 	file, err := os.Open(fName)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	prep := []string{}
-
+	// prep - array of string
+	var prep []string
+	// Some magic from StackOverflow
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		prep = append(prep, scanner.Text())
-		//fmt.Println(scanner.Text())
-		//fmt.Println(len(prep))
 	}
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
