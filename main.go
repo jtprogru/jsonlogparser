@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
+	"sort"
 )
 
 const iso8601DateFormat = "2006-01-02T15:04:05-07:00"
@@ -28,23 +30,20 @@ type LogString struct {
 }
 
 func main() {
-	// Check length of args
-	if len(os.Args) < 2 { //first arg is binary name
-		fmt.Println("ERROR: lost path to logfile \n" +
-			"./jsonlogparser ./path/to/access.log")
-	}
-	fName := os.Args[1]
-	// Try to open file
-
+	fName := flag.String("fname", "/var/log/nginx/access.log", "A path to access.log Nginx")
+	howmuch := flag.Int("howmuch", 15, "Show a TOP of remote addresses")
+	//showRequests := flag.Bool("request", false, "Show a TOP of Requests if enabled")
+	//showUpstreams := flag.Bool("upstreams", false, "Show a upstream if enabled")
+	flag.Parse()
 	threadCount := runtime.NumCPU()
 
 	strCh := make(chan string, threadCount)
 	parsedCh := make(chan *LogString, threadCount)
 
-	go readFile(fName, strCh)
+	go readFile(*fName, strCh)
 	go parseJson(strCh, parsedCh)
 
-	someLogic(parsedCh)
+	makeReport(parsedCh, *howmuch)
 }
 
 func readFile(fName string, ch chan string) {
@@ -77,8 +76,37 @@ func parseJson(in <-chan string, out chan *LogString) {
 	}
 }
 
-func someLogic(in <-chan *LogString) {
+type Pair struct {
+	Key   string
+	Count int
+}
+
+type PairList []Pair
+
+func (p PairList) Len() int           { return len(p) }
+func (p PairList) Less(i, j int) bool { return p[i].Count > p[j].Count }
+func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+func makeReport(in <-chan *LogString, topRemoteAddr int) {
+	remoteAddr := make(map[string]Pair)
 	for ls := range in {
-		log.Printf("%v", ls)
+		pl := remoteAddr[ls.RemoteAddr]
+		pl.Key = ls.RemoteAddr
+		pl.Count++
+		remoteAddr[ls.RemoteAddr] = pl
+
+	}
+	raPL := make(PairList, len(remoteAddr))
+	i := 0
+	for _, v := range remoteAddr {
+		raPL[i] = v
+		i++
+	}
+	sort.Sort(raPL)
+	for i, v := range raPL {
+		if i > topRemoteAddr-1 {
+			break
+		}
+		fmt.Printf("%d\t\t%s\t%d\n", i+1, v.Key, v.Count)
 	}
 }
