@@ -69,7 +69,8 @@ func parseJson(in <-chan string, out chan *LogString) {
 		res := new(LogString)
 		err := json.Unmarshal([]byte(str), res)
 		if err != nil {
-			log.Printf("Error on parse '%s': %v", str, err)
+//          Disable because generate more spam
+//			log.Printf("Error on parse '%s': %v", str, err)
 		} else {
 			out <- res
 		}
